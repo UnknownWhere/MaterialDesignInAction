@@ -1,17 +1,15 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
-
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
+    android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <android.support.v7.widget.Toolbar android:id="@+id/toolbar"
         android:layout_height="@dimen/action_bar_height"
+        android:layout_width="match_parent"
         android:background="?attr/colorPrimary"
         android:elevation="@dimen/layer_1"
-        app:theme="@style/ToolBarTheme" />
-
+        app:theme="@style/ToolBarTheme"/>
     <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/weather_detail_container"
