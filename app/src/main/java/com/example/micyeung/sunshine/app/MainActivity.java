@@ -15,6 +15,7 @@ import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.util.Pair;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -27,7 +28,7 @@ import android.widget.ListView;
 
 import com.example.micyeung.sunshine.app.sync.SunshineSyncAdapter;
 
-public class MainActivity extends ActionBarActivity implements ForecastFragment.Callback, DetailFragment.DetailCallback {
+public class MainActivity extends AppCompatActivity implements ForecastFragment.Callback, DetailFragment.DetailCallback {
     private final String LOG_TAG = MainActivity.class.getSimpleName();
     private boolean mTwoPane;
 

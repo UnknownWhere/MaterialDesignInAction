@@ -10,6 +10,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.TypedValue;
 
 import com.example.micyeung.sunshine.app.data.WeatherContract;
@@ -282,7 +283,7 @@ public class Utility {
     // If fromColor and toColor are different, do a delightful animation.
     // If fromColor and toColor are the same, just set the color instantly.
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static void changeBarColor(final ActionBarActivity activity, int fromColor, int toColor) {
+    public static void changeBarColor(final AppCompatActivity activity, int fromColor, int toColor) {
         if (fromColor != toColor) {
             ValueAnimator bgAnim = ValueAnimator.ofObject(new ArgbEvaluator(),
                     fromColor,
