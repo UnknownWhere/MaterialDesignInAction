@@ -1,0 +1,239 @@
+package com.example.micyeung.sunshine.app;
+
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
+import android.annotation.TargetApi;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v4.util.Pair;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AbsListView;
+import android.widget.ListView;
+
+
+import com.example.micyeung.sunshine.app.sync.SunshineSyncAdapter;
+
+public class MainActivity extends ActionBarActivity implements ForecastFragment.Callback, DetailFragment.DetailCallback {
+    private final String LOG_TAG = MainActivity.class.getSimpleName();
+    private boolean mTwoPane;
+
+
+    // This is the current theme (i.e. status bar and action bar) color.
+    // Initialize to an invalid value
+    private int mThemeColor = DetailFragment.INVALID_COLOR;
+    private static final String THEME_COLOR_KEY = "main_activity_theme_color";
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putInt(THEME_COLOR_KEY, mThemeColor);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //Log.i("MainActivity","onDestroy");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        //Log.i("MainActivity","onPause");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        //Log.i("MainActivity","onStop");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        //Log.i("MainActivity","onStart");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //Log.i("MainActivity","onResume");
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Log.i("MainActivity", "onCreate");
+        if (savedInstanceState != null) {
+            mThemeColor = savedInstanceState.getInt(THEME_COLOR_KEY);
+        }
+        setContentView(R.layout.activity_main);
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        if (findViewById(R.id.weather_detail_container) != null) {
+            // The detail container view will be present only in large screen layouts (sw600dp)
+            // This view is created only inn the sw600dp activity_main, so its presence means it's a two-pane layout
+            mTwoPane = true;
+
+            // Since it's two-pane mode, we show the detail view in this main activity by adding or replacing
+            // the detail fragment using a fragment transaction
+            // If savedInstanceState exists, then we should let the system handle restoring the detail fragment,
+            // otherwise, we have to add in the detail fragment dynamically
+            if (savedInstanceState == null) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.weather_detail_container, new DetailFragment())
+                        .commit();
+            }
+        } else {
+            mTwoPane = false;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                final ListView mListView = (ListView) findViewById(R.id.listview_forecast);
+                mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
+                    int mLastFirstVisibleItem = 0;
+
+                    @Override
+                    public void onScrollStateChanged(AbsListView view, int scrollState) {
+                    }
+
+                    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+                    @Override
+                    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                        if (view.getId() == mListView.getId()) {
+                            // Convert the toolbar height from dp to pixels, so we know how much to move the toolbar
+                            // to just about get it off screen.
+                            DisplayMetrics metrics = new DisplayMetrics();
+                            getWindowManager().getDefaultDisplay().getMetrics(metrics);
+                            float logicalDensity = metrics.density;
+                            float toolbarHeightInPx =
+                                    getResources().getDimension(R.dimen.action_bar_height) * logicalDensity;
+                            final int currentFirstVisibleItem = mListView.getFirstVisiblePosition();
+                            if (currentFirstVisibleItem > mLastFirstVisibleItem) {
+                                Animator tbOutAnimator = ObjectAnimator.ofFloat(toolbar, View.TRANSLATION_Y, -toolbarHeightInPx);
+                                tbOutAnimator.start();
+                            } else if (currentFirstVisibleItem < mLastFirstVisibleItem) {
+                                Animator tbInAnimator = ObjectAnimator.ofFloat(toolbar, View.TRANSLATION_Y, 0f);
+                                tbInAnimator.start();
+                            }
+                            mLastFirstVisibleItem = currentFirstVisibleItem;
+                        }
+                    }
+                });
+            }
+        }
+
+        // If it's two-pane mode, then we don't use today-layout for the master (left) layout, i.e. first
+        // row of the master looks like the other rows
+        // Else, in a one-pane mode, the first row looks different, more emphasized, bigger image, etc.
+        ForecastFragment forecastFragment = (ForecastFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_forecast);
+        forecastFragment.setUseTodayLayout(!mTwoPane);
+
+        ActionBar ab = getSupportActionBar();
+        ab.setDisplayShowTitleEnabled(true);
+
+
+        // Initializes Sync Adapter. If we're using other ways of pulling data
+        // e.g. with FetchWeatherTask or SunshineService, comment this line out.
+        SunshineSyncAdapter.initializeSyncAdapter(this);
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            Intent launchSettingsIntent = new Intent(this, SettingsActivity.class);
+            startActivity(launchSettingsIntent);
+        } else if (id == R.id.action_map) {
+            openPreferredLocationInMap();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void openPreferredLocationInMap() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String location = prefs.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
+
+        Uri uri = Uri.parse("geo:0,0?").buildUpon()
+                .appendQueryParameter("q", location)
+                .build();
+        Intent launchMapIntent = new Intent(Intent.ACTION_VIEW);
+        launchMapIntent.setData(uri);
+        if (launchMapIntent.resolveActivity(getPackageManager()) != null) {
+            startActivity(launchMapIntent);
+        } else {
+            Log.d(LOG_TAG, "Could call " + location);
+        }
+    }
+
+    @Override
+    public void onItemSelected(String date, int visiblePosition) {
+        if (mTwoPane) {
+            // How to pass the selected date to the DetailFragment?
+            // Ans: we create an empty DetailFragment, then set its arguments.
+            // In two-pane mode, show the detail view in this activity by adding or replacing the detail fragment using a fragment transaction.
+            Bundle args = new Bundle();
+            args.putString(DetailActivity.DATE_KEY, date);
+
+            DetailFragment detailFragment = new DetailFragment();
+            detailFragment.setArguments(args);
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.weather_detail_container, detailFragment)
+                    .commit();
+
+        } else {
+            Intent launchDetailActivityIntent = new Intent(this, DetailActivity.class)
+                    .putExtra(DetailActivity.DATE_KEY, date);
+            View listItemView = ((ListView) findViewById(R.id.listview_forecast))
+                    .getChildAt(visiblePosition);
+            ForecastAdapter.ViewHolder viewHolder = (ForecastAdapter.ViewHolder) listItemView.getTag();
+            View iconView = viewHolder.iconView;
+            View textView = viewHolder.descriptionView;
+            Resources res = getResources();
+            ActivityOptionsCompat activityOptions = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                    this,
+                    Pair.create(iconView, res.getString(R.string.transition_image)),
+                    Pair.create(textView, res.getString(R.string.transition_forecast_text))
+            );
+            ActivityCompat.startActivity(this, launchDetailActivityIntent, activityOptions.toBundle());
+        }
+    }
+
+    @Override
+    public void doColorChange(int toColor) {
+        // Need this check because ValueAnimator methods only work on API 11 and above
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            if (mThemeColor == DetailFragment.INVALID_COLOR) {
+                mThemeColor = Utility.getPrimaryColor(this);
+            }
+            int fromColor = mThemeColor;
+            Utility.changeBarColor(this, fromColor, toColor);
+            // Set the theme color to be the new color
+            mThemeColor = toColor;
+        }
+    }
+}
